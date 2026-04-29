@@ -168,11 +168,11 @@ html = f"""<!DOCTYPE html>
     text-align: center; color: #0f3460; font-weight: bold; transition: background 0.15s;
   }}
   #play-btn:hover {{ background: #81d4fa; }}
-  #map {{ flex: 1; }}
+  #map {{ flex: 1; background: #b5926a; }}
   .legend {{ background: white; color: #333; padding: 10px 14px; border-radius: 6px; line-height: 1.6; font-size: 12px; }}
   .legend-title {{ font-weight: bold; margin-bottom: 6px; font-size: 13px; }}
   .legend-bar {{ width: 180px; height: 12px; border-radius: 3px; margin-bottom: 4px;
-    background: linear-gradient(to right, #f7fcf5, #74c476, #00441b); }}
+    background: linear-gradient(to right, rgba(255,255,255,0.5), #74c476, #00441b); }}
   .legend-labels {{ display: flex; justify-content: space-between; font-size: 11px; color: #666; }}
   .info-box {{ background: white; color: #333; padding: 10px 14px; border-radius: 6px; font-size: 13px; min-width: 180px; }}
   .info-box b {{ font-size: 15px; }}
@@ -202,18 +202,14 @@ const NAT_SHARES = {json.dumps(nat_shares)};
 const YEAR_SCALES = {json.dumps(year_scales)};
 const YEARS = {json.dumps(YEARS)};
 
-// Colour scale — domain updated per year
-let scale = chroma.scale(['#f7fcf5','#c7e9c0','#74c476','#238b45','#00441b']);
+// Colour scale — fixed 0–20%, white→green
+// Opacity also scales with value so 0% EV = 50% opaque white (shows brown bg through)
+const scale = chroma.scale(['#ffffff','#c7e9c0','#74c476','#238b45','#00441b']).domain([0, 20]);
 
 function updateScale(year) {{
   const s = YEAR_SCALES[year];
-  scale = chroma.scale(['#f7fcf5','#c7e9c0','#74c476','#238b45','#00441b']).domain([0, s.hi]);
-  const loEl  = document.getElementById('leg-lo');
   const midEl = document.getElementById('leg-mid');
-  const hiEl  = document.getElementById('leg-hi');
-  if (loEl)  loEl.textContent  = '0%';
   if (midEl) midEl.textContent = s.mean + '%';
-  if (hiEl)  hiEl.textContent  = s.hi  + '%';
 }}
 
 const map = L.map('map', {{
@@ -222,10 +218,7 @@ const map = L.map('map', {{
   zoomControl: true,
 }});
 
-L.tileLayer('https://{{s}}.basemaps.cartocdn.com/light_nolabels/{{z}}/{{x}}/{{y}}{{r}}.png', {{
-  attribution: '© OpenStreetMap contributors © CARTO',
-  maxZoom: 18,
-}}).addTo(map);
+// No tile layer — brown CSS background shows through gaps (ocean, harbour)
 
 // Info box (hover)
 const info = L.control({{ position: 'topright' }});
@@ -267,9 +260,9 @@ legend.onAdd = function() {{
     <div class="legend-title">EV share of new cars</div>
     <div class="legend-bar"></div>
     <div class="legend-labels">
-      <span id="leg-lo">–</span><span id="leg-mid">–</span><span id="leg-hi">–</span>
+      <span id="leg-lo">0%</span><span id="leg-mid">–</span><span id="leg-hi">20%+</span>
     </div>
-    <div style="margin-top:5px;font-size:10px;color:#999">p5 · mean · p95 across postcodes</div>
+    <div style="margin-top:5px;font-size:10px;color:#999">0 · Sydney mean · 20%+</div>
     <div style="margin-top:3px;font-size:10px;color:#999">Grey = &lt;{MIN_NEW} registrations</div>
   `;
   return div;
@@ -282,12 +275,18 @@ updateScale(currentYear);  // legend is in DOM now
 
 function styleFeature(feature, year) {{
   const val = feature.properties['ev_' + year];
+  if (val == null) {{
+    return {{ fillColor: '#cccccc', fillOpacity: 0.3, color: 'rgba(255,255,255,0.4)', weight: 0.4, opacity: 0.5 }};
+  }}
+  // Opacity fades in: 0.5 at 0% EV → 0.88 at 20%+ EV
+  const t = Math.min(1, val / 20);
+  const fillOpacity = 0.5 + t * 0.38;
   return {{
-    fillColor: val != null ? scale(val).hex() : '#cccccc',
-    fillOpacity: val != null ? 0.78 : 0.35,
-    color: 'white',
+    fillColor: scale(val).hex(),
+    fillOpacity,
+    color: 'rgba(255,255,255,0.45)',
     weight: 0.5,
-    opacity: 0.8,
+    opacity: 0.7,
   }};
 }}
 
