@@ -1,0 +1,15 @@
+# Large raw data files — not committed
+*.csv
+*.shp
+*.dbf
+*.shx
+*.prj
+*.cpg
+*.qmd
+*.zip
+*.venv/
+.venv/
+
+# Keep the generated maps and analysis script
+!sydney_fleet_stats.csv
+!sydney_new_ev_stats.csv
