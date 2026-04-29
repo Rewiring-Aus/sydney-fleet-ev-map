@@ -72,7 +72,10 @@ const map = L.map('map', {
   zoomControl: true,
 });
 
-// No tile layer — brown CSS background shows through gaps (ocean, harbour)
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap contributors © CARTO',
+  maxZoom: 18,
+}).addTo(map);
 
 // Info box (hover)
 const info = L.control({ position: 'topright' });
