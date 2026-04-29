@@ -125,8 +125,8 @@ centroids_wgs = gpd.GeoDataFrame(
 
 # Radius scaling: area ∝ fleet size → radius ∝ sqrt(fleet)
 # Scale so largest postcode (70929 veh) gets ~1600m radius
-K = 1600 / np.sqrt(70929)
-MIN_RADIUS = 250  # metres floor
+K = 3000 / np.sqrt(70929)
+MIN_RADIUS = 400  # metres floor
 
 circles = []
 for _, row in centroids_wgs.iterrows():
